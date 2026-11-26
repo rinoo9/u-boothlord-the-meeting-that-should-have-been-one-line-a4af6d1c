@@ -1,30 +1,50 @@
 #!/usr/bin/env python3
 """The Meeting That Should Have Been One Line.
 
-Writes one line, 151 characters, that could have replaced an entire
-pointless meeting, to /output/entry.txt. One sentence, no setup, no
-explanation: the meeting existed only to answer a question a one-word
-email saying yes would have settled before lunch.
-Deterministic: the same line every run.
+A make.fun bounty entry. The program writes one line to
+/output/entry.txt — a single sentence that could have replaced an
+entire pointless meeting, at most 200 characters.
+
+The joke: six people burn an hour in a room, and the grand conclusion
+is to do exactly what the original email already told them to do. The
+meeting's only output is permission to follow the email.
+
+The sentence is a fixed constant: no input, no randomness, no clock,
+no network. Every run writes byte-identical output.
 """
 
 import os
+import sys
 
-ENTRY = (
-    "We booked a room, six calendars, and an hour of everyone's lives "
-    "to answer a question that a one-word email saying yes would have "
-    "settled before lunch."
+SENTENCE = (
+    "Six people, one hour, and a shared calendar invite later, "
+    "we all agreed to do the thing the email already said to do."
 )
-
-# The sealed gate requires 1 to 200 characters of UTF-8 text.
-assert 1 <= len(ENTRY) <= 200
-assert "\n" not in ENTRY
+MAX_LEN = 200
+DEST = "/output/entry.txt"
 
 
-def main() -> None:
-    os.makedirs("/output", exist_ok=True)
-    with open("/output/entry.txt", "w", encoding="utf-8") as f:
-        f.write(ENTRY)
+def validate(line):
+    """Return every way the line breaks the bounty gate, or nothing."""
+    issues = []
+    if not line.strip():
+        issues.append("entry is blank")
+    if len(line) > MAX_LEN:
+        issues.append(f"entry is {len(line)} chars, limit is {MAX_LEN}")
+    if "\n" in line or "\r" in line:
+        issues.append("entry must be a single line")
+    return issues
+
+
+def main():
+    issues = validate(SENTENCE)
+    if issues:
+        for issue in issues:
+            print(f"gate failed: {issue}", file=sys.stderr)
+        raise SystemExit(1)
+    os.makedirs(os.path.dirname(DEST), exist_ok=True)
+    with open(DEST, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(SENTENCE)
 
 
 if __name__ == "__main__":
